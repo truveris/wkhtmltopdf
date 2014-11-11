@@ -26,6 +26,7 @@
 #include <QNetworkDiskCache>
 #include <QTimer>
 #include <QUuid>
+#include <QEventLoop>
 #if QT_VERSION >= 0x050000
 #include <QUrlQuery>
 #endif
@@ -372,6 +373,7 @@ void ResourceObject::sslErrors(QNetworkReply *reply, const QList<QSslError> &) {
 }
 
 void ResourceObject::load() {
+	QEventLoop loop;
 	finished=false;
 	++multiPageLoader.loading;
 
@@ -441,6 +443,10 @@ void ResourceObject::load() {
 			r.setHeader(QNetworkRequest::ContentTypeHeader, QString("multipart/form-data, boundary=")+boundary);
 		webPage.mainFrame()->load(r, QNetworkAccessManager::PostOperation, postData);
 	}
+
+	connect(&networkAccessManager, SIGNAL(finished (QNetworkReply *)),
+			&loop, SLOT(amfinished (QNetworkReply *) ) );
+	loop.exec();
 }
 
 void MyCookieJar::useCookie(const QUrl &, const QString & name, const QString & value) {
